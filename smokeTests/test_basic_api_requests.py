@@ -4,7 +4,7 @@ import requests
 from api_urls import OBJECTS_URLS
 
 
-pytestmark = [pytest.mark.test, pytest.mark.smoke]
+pytestmark = [pytest.mark.test, pytest.mark.smoke, pytest.mark.positive]
 
 
 # Verifies that the objects collection is available and returns a JSON list.
