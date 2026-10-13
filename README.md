@@ -32,6 +32,16 @@ The selected API supports standard REST operations:
 ```text
 .
 |-- api_urls.py
+|-- pytest.ini
+|-- requirements.txt
+|-- tests/
+|   |-- smoke_tests/
+|   |   `-- test_basic_api_requests.py
+|   |-- get_requests/
+|   |-- post_requests/
+|   |-- put_requests/
+|   |-- patch_requests/
+|   `-- delete_requests/
 |-- .gitignore
 `-- README.md
 ```
