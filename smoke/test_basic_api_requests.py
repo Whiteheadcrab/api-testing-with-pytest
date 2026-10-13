@@ -3,6 +3,7 @@ import requests
 from api_urls import OBJECTS_URLS
 
 
+# Verifies that the objects collection is available and returns a JSON list.
 def test_get_objects_returns_success():
     response = requests.get(OBJECTS_URLS.BASE, timeout=10)
 
@@ -10,6 +11,7 @@ def test_get_objects_returns_success():
     assert isinstance(response.json(), list)
 
 
+# Verifies that a new object can be created with a valid request payload.
 def test_post_object_creates_new_object():
     payload = {
         "name": "QA Automation Test Object",
@@ -28,6 +30,7 @@ def test_post_object_creates_new_object():
     assert response_body["id"]
 
 
+# Verifies that an existing object can be fully replaced with PUT.
 def test_put_object_updates_existing_object():
     object_id = _create_test_object()
     payload = {
@@ -47,6 +50,7 @@ def test_put_object_updates_existing_object():
     assert response_body["data"] == payload["data"]
 
 
+# Verifies that an existing object can be partially updated with PATCH.
 def test_patch_object_updates_existing_object_partially():
     object_id = _create_test_object()
     payload = {
@@ -60,6 +64,7 @@ def test_patch_object_updates_existing_object_partially():
     assert response_body["name"] == payload["name"]
 
 
+# Verifies that an existing object can be deleted successfully.
 def test_delete_object_removes_existing_object():
     object_id = _create_test_object()
 
@@ -69,6 +74,7 @@ def test_delete_object_removes_existing_object():
     assert object_id in response.json()["message"]
 
 
+# Creates a temporary object for tests that require an existing resource.
 def _create_test_object() -> str:
     payload = {
         "name": "QA Automation Temporary Object",
