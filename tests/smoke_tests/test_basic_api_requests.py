@@ -1,13 +1,13 @@
-import pytest
 import requests
+from pytest import mark
 
 from api_urls import OBJECTS_URLS
 
 
-pytestmark = [pytest.mark.test, pytest.mark.smoke, pytest.mark.positive]
-
-
 # Verifies that the objects collection is available and returns a JSON list.
+@mark.test
+@mark.smoke
+@mark.positive
 def test_get_objects_returns_success():
     response = requests.get(OBJECTS_URLS.BASE, timeout=10)
 
@@ -16,6 +16,9 @@ def test_get_objects_returns_success():
 
 
 # Verifies that a new object can be created with a valid request payload.
+@mark.test
+@mark.smoke
+@mark.positive
 def test_post_object_creates_new_object():
     payload = {
         "name": "QA Automation Test Object",
@@ -35,6 +38,9 @@ def test_post_object_creates_new_object():
 
 
 # Verifies that an existing object can be fully replaced with PUT.
+@mark.test
+@mark.smoke
+@mark.positive
 def test_put_object_updates_existing_object():
     object_id = _create_test_object()
     payload = {
@@ -55,6 +61,9 @@ def test_put_object_updates_existing_object():
 
 
 # Verifies that an existing object can be partially updated with PATCH.
+@mark.test
+@mark.smoke
+@mark.positive
 def test_patch_object_updates_existing_object_partially():
     object_id = _create_test_object()
     payload = {
@@ -69,6 +78,9 @@ def test_patch_object_updates_existing_object_partially():
 
 
 # Verifies that an existing object can be deleted successfully.
+@mark.test
+@mark.smoke
+@mark.positive
 def test_delete_object_removes_existing_object():
     object_id = _create_test_object()
 
