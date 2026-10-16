@@ -8,6 +8,7 @@ from api_urls import OBJECTS_URLS
 @mark.test
 @mark.smoke
 @mark.positive
+@mark.get
 def test_get_objects_returns_success():
     response = requests.get(OBJECTS_URLS.BASE, timeout=10)
 
@@ -19,6 +20,7 @@ def test_get_objects_returns_success():
 @mark.test
 @mark.smoke
 @mark.positive
+@mark.post
 def test_post_object_creates_new_object():
     payload = {
         "name": "QA Automation Test Object",
