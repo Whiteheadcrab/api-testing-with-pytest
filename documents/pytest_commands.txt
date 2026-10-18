@@ -1,0 +1,145 @@
+PYTEST COMMAND REFERENCE
+========================
+
+Run these commands in PowerShell from the project root:
+E:\Repositories\Python\pytestFramework\pytestProject2
+
+The examples use the project's virtual environment directly, so activation is
+not required. Each command below is a separate example.
+
+
+RUN ALL TESTS
+-------------
+Run every test under tests with detailed test names and results:
+.\.venv\Scripts\python.exe -m pytest tests -v --strict-markers
+
+
+RUN MULTIPLE TEST FOLDERS OR FILES
+--------------------------------
+Run both PUT and DELETE tests in one command:
+.\.venv\Scripts\python.exe -m pytest tests/put_requests tests/delete_requests -v
+
+Run selected GET, PATCH, and DELETE files in one command:
+.\.venv\Scripts\python.exe -m pytest tests/get_requests/test_get_objects.py tests/patch_requests/test_patch_objects.py tests/delete_requests/test_delete_object.py -v
+
+Run two specific tests in one command:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_removes_existing_object tests/put_requests/test_put_object.py::test_put_object_updates_name_and_data -v
+
+Specifying a parametrized test function runs every parameter case for it.
+Listing multiple paths selects tests together; execution is sequential by default.
+
+
+RUN ONE FILE, FUNCTION, OR PARAMETER CASE
+---------------------------------------
+Run the DELETE test file:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py -v
+
+Run all three missing-object DELETE cases:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist -v
+
+Run only the already-deleted parameter case (quote the complete test ID):
+.\.venv\Scripts\python.exe -m pytest "tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist[already-deleted]" -v
+
+
+SELECT TESTS BY MARKERS
+----------------------
+Run tests carrying the delete marker:
+.\.venv\Scripts\python.exe -m pytest tests -m delete -v
+
+Run tests carrying either the put or delete marker:
+.\.venv\Scripts\python.exe -m pytest tests -m "put or delete" -v
+
+Run positive DELETE tests:
+.\.venv\Scripts\python.exe -m pytest tests -m "delete and positive" -v
+
+Run negative PUT and DELETE tests:
+.\.venv\Scripts\python.exe -m pytest tests -m "(put or delete) and negative" -v
+
+Run smoke or sanity tests:
+.\.venv\Scripts\python.exe -m pytest tests -m "smoke or sanity" -v
+
+Run positive tests excluding smoke tests:
+.\.venv\Scripts\python.exe -m pytest tests -m "positive and not smoke" -v
+
+Markers must be applied to a test to select it. A folder name does not apply a
+marker automatically. Use file/folder paths to select every test for an operation,
+including tests that currently lack an operation marker.
+
+
+SELECT TESTS BY NAME
+-------------------
+Run tests whose names or parameter IDs match either expression:
+.\.venv\Scripts\python.exe -m pytest tests -k "invalid_request_body or already-deleted" -v
+
+Combine a folder selection with a name filter:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -k "does_not_exist" -v
+
+-k matches names and IDs; -m matches pytest markers.
+
+
+DISCOVER TESTS WITHOUT CALLING THE API
+------------------------------------
+List all collected tests, including parameter case IDs:
+.\.venv\Scripts\python.exe -m pytest tests --collect-only -q --strict-markers
+
+Preview only negative DELETE cases:
+.\.venv\Scripts\python.exe -m pytest tests -m "delete and negative" --collect-only -q
+
+Collection imports test modules but does not run test functions or fixtures.
+
+
+CONTROL OUTPUT AND FAILURE HANDLING
+----------------------------------
+Use compact output and short failure tracebacks:
+.\.venv\Scripts\python.exe -m pytest tests -q --tb=short
+
+Stop after the first failure:
+.\.venv\Scripts\python.exe -m pytest tests -x -v
+
+Stop after two failures:
+.\.venv\Scripts\python.exe -m pytest tests --maxfail=2 -v
+
+Show print output while tests run:
+.\.venv\Scripts\python.exe -m pytest tests -s -v
+
+Show reasons for skipped and expected-failure results:
+.\.venv\Scripts\python.exe -m pytest tests -v -ra
+
+Show the five slowest test phases, including setup and teardown:
+.\.venv\Scripts\python.exe -m pytest tests --durations=5
+
+The POST validation cases marked xfail document validation the API currently
+accepts. XFAIL means an expected failure; XPASS means such a test passed.
+
+
+RERUN PREVIOUS FAILURES
+----------------------
+Rerun cached failures; collect nothing if there are no cached failures:
+.\.venv\Scripts\python.exe -m pytest tests --lf --last-failed-no-failures=none -v
+
+Run the entire selection, putting previously failed tests first:
+.\.venv\Scripts\python.exe -m pytest tests --ff -v
+
+
+REPORTS AND HELP
+----------------
+Write a JUnit XML report for CI tools (also runs the selected tests):
+.\.venv\Scripts\python.exe -m pytest tests --junitxml=documents/pytest_results.xml -v
+
+List registered and built-in markers:
+.\.venv\Scripts\python.exe -m pytest --markers
+
+List available fixtures for the DELETE tests:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests --fixtures -q
+
+Show available command-line options:
+.\.venv\Scripts\python.exe -m pytest --help
+
+
+PROJECT API REQUEST LIMIT
+-------------------------
+These are live API tests. A test may send several requests for setup, assertions,
+and cleanup. The API reported a public limit of 50 requests per 24 hours during
+the latest run and returned HTTP 405 with a daily-limit error when exhausted.
+Use --collect-only to preview selections without sending requests. If the quota
+is exhausted, wait for it to reset before retrying live tests.
