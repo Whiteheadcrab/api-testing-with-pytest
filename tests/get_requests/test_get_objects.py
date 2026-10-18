@@ -33,13 +33,14 @@ def test_get_objects_returns_success():
 @mark.test
 @mark.sanity
 @mark.positive
-def test_get_object_by_id_returns_requested_object():
-    response = requests.get(OBJECTS_URLS.object_by_id("1"), timeout=10)
+@mark.parametrize("object_id", ["1", "2"], ids=["first-object", "second-object"])
+def test_get_object_by_id_returns_requested_object(object_id):
+    response = requests.get(OBJECTS_URLS.object_by_id(object_id), timeout=10)
 
     assert response.status_code == 200
     response_body = response.json()
     assert isinstance(response_body, dict)
-    assert response_body["id"] == "1"
+    assert response_body["id"] == object_id
     assert isinstance(response_body["name"], str)
     assert response_body["name"]
     assert "data" in response_body
@@ -49,16 +50,21 @@ def test_get_object_by_id_returns_requested_object():
 @mark.test
 @mark.sanity
 @mark.positive
-def test_get_objects_filters_by_requested_ids():
+@mark.parametrize(
+    "object_ids",
+    [["1"], ["1", "2"]],
+    ids=["single-id", "multiple-ids"],
+)
+def test_get_objects_filters_by_requested_ids(object_ids):
     response = requests.get(
-        OBJECTS_URLS.BASE, params={"id": ["1", "2"]}, timeout=10
+        OBJECTS_URLS.BASE, params={"id": object_ids}, timeout=10
     )
 
     assert response.status_code == 200
     response_body = response.json()
     assert isinstance(response_body, list)
-    assert len(response_body) == 2
-    assert {item["id"] for item in response_body} == {"1", "2"}
+    assert len(response_body) == len(object_ids)
+    assert {item["id"] for item in response_body} == set(object_ids)
 
 
 # Checks that nonexistent and negative IDs return a not-found error.

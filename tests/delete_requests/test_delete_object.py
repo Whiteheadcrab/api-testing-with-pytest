@@ -53,37 +53,39 @@ def test_delete_object_removes_existing_object(created_object):
     assert object_id in response.json()["error"]
 
 
-# Checks that a second DELETE returns not found and the object remains unavailable.
-@mark.test
-@mark.delete
-@mark.negative
-def test_delete_object_fails_when_object_is_already_deleted(created_object):
-    object_id = created_object["id"]
-    object_url = OBJECTS_URLS.object_by_id(object_id)
-    response = requests.delete(object_url, timeout=10)
-    assert response.status_code == 200
-
-    response = requests.delete(object_url, timeout=10)
-
-    assert response.status_code == 404
-    assert object_id in response.json()["error"]
-
-    response = requests.get(object_url, timeout=10)
-    assert response.status_code == 404
-    assert object_id in response.json()["error"]
+# Prepares each missing-resource scenario; indirect parametrization supplies request.param.
+@fixture
+def missing_object_id(request):
+    if request.param == "already-deleted":
+        # Only this scenario needs a real object and the existing cleanup fixture.
+        created = request.getfixturevalue("created_object")
+        object_id = created["id"]
+        response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+        assert response.status_code == 200
+        return object_id
+    if request.param == "negative-id":
+        return "-1"
+    # A random ID avoids accidentally targeting an existing resource.
+    return f"pytest-missing-{uuid4().hex}"
 
 
-# Checks that deleting nonexistent or negative IDs returns a not-found error.
+# All missing-resource scenarios must reject DELETE and remain unavailable through GET.
 @mark.test
 @mark.delete
 @mark.negative
 @mark.parametrize(
-    "object_id",
-    [f"pytest-missing-{uuid4().hex}", "-1"],
-    ids=["nonexistent-id", "negative-id"],
+    "missing_object_id",
+    ["nonexistent-id", "negative-id", "already-deleted"],
+    indirect=True,
+    ids=["nonexistent-id", "negative-id", "already-deleted"],
 )
-def test_delete_object_fails_when_object_does_not_exist(object_id):
-    response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+def test_delete_object_fails_when_object_does_not_exist(missing_object_id):
+    object_url = OBJECTS_URLS.object_by_id(missing_object_id)
+    response = requests.delete(object_url, timeout=10)
 
     assert response.status_code == 404
-    assert object_id in response.json()["error"]
+    assert missing_object_id in response.json()["error"]
+
+    response = requests.get(object_url, timeout=10)
+    assert response.status_code == 404
+    assert missing_object_id in response.json()["error"]

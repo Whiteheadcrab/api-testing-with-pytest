@@ -33,67 +33,40 @@ def created_object():
         assert response.status_code == 200
 
 
-# Verifies that updating only the name preserves the existing data.
+# Verifies each update persists while fields omitted from the payload remain unchanged.
 @mark.test
 @mark.patch
 @mark.positive
-def test_patch_object_updates_name(created_object):
-    payload = {"name": "QA Automation Patched Object"}
-    response = requests.patch(
-        OBJECTS_URLS.object_by_id(created_object["id"]), json=payload, timeout=10
-    )
-
-    assert response.status_code == 200
-    response_body = response.json()
-    assert response_body["id"] == created_object["id"]
-    assert response_body["name"] == payload["name"]
-    assert response_body["data"] == created_object["data"]
-
-
-# Verifies that updating only data preserves the name and persists the new data.
-@mark.test
-@mark.patch
-@mark.positive
-def test_patch_object_updates_data_without_changing_name(created_object):
-    payload = {"data": {"created_by": "pytest", "updated": True}}
+@mark.parametrize(
+    "payload",
+    [
+        {"name": "QA Automation Patched Object"},
+        {"data": {"created_by": "pytest", "updated": True}},
+        {
+            "name": "QA Automation Updated Object",
+            "data": {"created_by": "pytest", "price": 123.45},
+        },
+    ],
+    ids=["name-only", "data-only", "name-and-data"],
+)
+def test_patch_object_updates_requested_fields(created_object, payload):
+    # Overlay the requested fields on the original values to check untouched fields too.
+    expected = {**created_object, **payload}
     object_url = OBJECTS_URLS.object_by_id(created_object["id"])
     response = requests.patch(object_url, json=payload, timeout=10)
 
     assert response.status_code == 200
     response_body = response.json()
     assert response_body["id"] == created_object["id"]
-    assert response_body["name"] == created_object["name"]
-    assert response_body["data"] == payload["data"]
-
-    response = requests.get(object_url, timeout=10)
-    assert response.status_code == 200
-    assert response.json()["data"] == payload["data"]
-    assert response.json()["name"] == created_object["name"]
-
-
-# Verifies that both fields are updated, persisted, and accompanied by an update timestamp.
-@mark.test
-@mark.patch
-@mark.positive
-def test_patch_object_updates_name_and_data(created_object):
-    payload = {
-        "name": "QA Automation Updated Object",
-        "data": {"created_by": "pytest", "price": 123.45},
-    }
-    object_url = OBJECTS_URLS.object_by_id(created_object["id"])
-    response = requests.patch(object_url, json=payload, timeout=10)
-
-    assert response.status_code == 200
-    response_body = response.json()
-    assert response_body["id"] == created_object["id"]
-    assert response_body["name"] == payload["name"]
-    assert response_body["data"] == payload["data"]
+    assert response_body["name"] == expected["name"]
+    assert response_body["data"] == expected["data"]
     assert response_body["updatedAt"]
 
+    # Verify persisted values as well as the immediate PATCH response.
     response = requests.get(object_url, timeout=10)
     assert response.status_code == 200
-    assert response.json()["name"] == payload["name"]
-    assert response.json()["data"] == payload["data"]
+    assert response.json()["name"] == expected["name"]
+    assert response.json()["data"] == expected["data"]
 
 
 # Checks that PATCH rejects an ID that does not belong to an existing object.

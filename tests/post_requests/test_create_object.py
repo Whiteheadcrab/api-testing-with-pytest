@@ -1,7 +1,7 @@
 # POST coverage for successful creation and invalid request payloads.
 
 import requests
-from pytest import mark
+from pytest import mark, param
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
@@ -30,33 +30,25 @@ def test_post_object_creates_new_object():
     assert response_body["id"]
 
 
-# Documents expected name validation; xfail records that the API currently accepts it.
+# Each parameter retains its own expected-failure reason for unsupported validation.
 @mark.test
 @mark.negative
-@mark.xfail(reason="API currently accepts object creation without a name.")
-def test_post_object_creation_fails_when_name_is_missing():
-    payload = {
-        "data": {
-            "created_by": "pytest",
-            "request_type": "post",
-        },
-    }
-
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
-
-    assert response.status_code == 400
-
-
-# Documents expected data validation; xfail records that the API accepts non-object data.
-@mark.test
-@mark.negative
-@mark.xfail(reason="API currently accepts non-object data values.")
-def test_post_object_creation_fails_when_data_format_is_incorrect():
-    payload = {
-        "name": "QA Automation Invalid Data Object",
-        "data": "not-an-object",
-    }
-
+@mark.parametrize(
+    "payload",
+    [
+        param(
+            {"data": {"created_by": "pytest", "request_type": "post"}},
+            marks=mark.xfail(reason="API currently accepts object creation without a name."),
+            id="missing-name",
+        ),
+        param(
+            {"name": "QA Automation Invalid Data Object", "data": "not-an-object"},
+            marks=mark.xfail(reason="API currently accepts non-object data values."),
+            id="invalid-data-format",
+        ),
+    ],
+)
+def test_post_object_creation_rejects_invalid_fields(payload):
     response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
 
     assert response.status_code == 400

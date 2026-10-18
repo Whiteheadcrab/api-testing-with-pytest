@@ -33,15 +33,22 @@ def created_object():
         assert response.status_code == 200
 
 
-# Verifies that PUT replaces the submitted fields and persists the updated object.
+# Verifies replacement and persistence for populated data and for clearing existing data.
 @mark.test
 @mark.put
 @mark.positive
-def test_put_object_updates_name_and_data(created_object):
-    payload = {
-        "name": "QA Automation Updated Object",
-        "data": {"created_by": "pytest", "price": 123.45},
-    }
+@mark.parametrize(
+    "payload",
+    [
+        {
+            "name": "QA Automation Updated Object",
+            "data": {"created_by": "pytest", "price": 123.45},
+        },
+        {"name": "QA Automation Replaced Object", "data": {}},
+    ],
+    ids=["replace-name-and-data", "clear-existing-data"],
+)
+def test_put_object_updates_name_and_data(created_object, payload):
     object_url = OBJECTS_URLS.object_by_id(created_object["id"])
     response = requests.put(object_url, json=payload, timeout=10)
 
@@ -52,27 +59,7 @@ def test_put_object_updates_name_and_data(created_object):
     assert response_body["data"] == payload["data"]
     assert response_body["updatedAt"]
 
-    response = requests.get(object_url, timeout=10)
-    assert response.status_code == 200
-    assert response.json()["name"] == payload["name"]
-    assert response.json()["data"] == payload["data"]
-
-
-# Verifies that an empty data object clears the previous data instead of merging it.
-@mark.test
-@mark.put
-@mark.positive
-def test_put_object_replaces_existing_data_with_empty_object(created_object):
-    payload = {"name": "QA Automation Replaced Object", "data": {}}
-    object_url = OBJECTS_URLS.object_by_id(created_object["id"])
-    response = requests.put(object_url, json=payload, timeout=10)
-
-    assert response.status_code == 200
-    response_body = response.json()
-    assert response_body["id"] == created_object["id"]
-    assert response_body["name"] == payload["name"]
-    assert response_body["data"] == payload["data"]
-
+    # Retrieve the object independently to confirm the replacement was persisted.
     response = requests.get(object_url, timeout=10)
     assert response.status_code == 200
     assert response.json()["name"] == payload["name"]
