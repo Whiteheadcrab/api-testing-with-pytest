@@ -1,11 +1,17 @@
+# PATCH coverage for partial updates, persistence, and rejected requests.
+
 from uuid import uuid4
 
 import requests
 from pytest import fixture, mark
 
+# Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
 
+# Markers select the API operation and outcome; parametrization runs each input separately.
 
+
+# Creates a separate object for each test and cleans it up even if an assertion fails.
 @fixture
 def created_object():
     payload = {
@@ -19,12 +25,15 @@ def created_object():
     object_url = OBJECTS_URLS.object_by_id(response_body["id"])
 
     try:
+        # Give the test the created resource; execution resumes here during teardown.
         yield response_body
     finally:
+        # Remove the resource after the test, including when the test fails.
         response = requests.delete(object_url, timeout=10)
         assert response.status_code == 200
 
 
+# Verifies that updating only the name preserves the existing data.
 @mark.test
 @mark.patch
 @mark.positive
@@ -41,6 +50,7 @@ def test_patch_object_updates_name(created_object):
     assert response_body["data"] == created_object["data"]
 
 
+# Verifies that updating only data preserves the name and persists the new data.
 @mark.test
 @mark.patch
 @mark.positive
@@ -61,6 +71,7 @@ def test_patch_object_updates_data_without_changing_name(created_object):
     assert response.json()["name"] == created_object["name"]
 
 
+# Verifies that both fields are updated, persisted, and accompanied by an update timestamp.
 @mark.test
 @mark.patch
 @mark.positive
@@ -85,10 +96,12 @@ def test_patch_object_updates_name_and_data(created_object):
     assert response.json()["data"] == payload["data"]
 
 
+# Checks that PATCH rejects an ID that does not belong to an existing object.
 @mark.test
 @mark.patch
 @mark.negative
 def test_patch_object_fails_when_object_does_not_exist():
+    # A random ID avoids accidentally targeting an existing resource.
     object_id = f"pytest-missing-{uuid4().hex}"
     payload = {"name": "QA Automation Patched Object"}
 
@@ -100,6 +113,7 @@ def test_patch_object_fails_when_object_does_not_exist():
     assert object_id in response.json()["error"]
 
 
+# Checks both invalid JSON and an array payload, then confirms the object is unchanged.
 @mark.test
 @mark.patch
 @mark.negative
@@ -112,6 +126,7 @@ def test_patch_object_rejects_invalid_request_body(created_object, request_body)
     object_url = OBJECTS_URLS.object_by_id(created_object["id"])
     response = requests.patch(
         object_url,
+        # Send raw text so malformed JSON reaches the server without client serialization.
         data=request_body,
         headers={"Content-Type": "application/json"},
         timeout=10,

@@ -1,11 +1,17 @@
+# PUT coverage for replacement, persistence, and rejected requests.
+
 from uuid import uuid4
 
 import requests
 from pytest import fixture, mark
 
+# Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
 
+# Markers select the API operation and outcome; parametrization runs each input separately.
 
+
+# Creates a separate object for each test and cleans it up even if an assertion fails.
 @fixture
 def created_object():
     payload = {
@@ -19,12 +25,15 @@ def created_object():
     object_url = OBJECTS_URLS.object_by_id(response_body["id"])
 
     try:
+        # Give the test the created resource; execution resumes here during teardown.
         yield response_body
     finally:
+        # Remove the resource after the test, including when the test fails.
         response = requests.delete(object_url, timeout=10)
         assert response.status_code == 200
 
 
+# Verifies that PUT replaces the submitted fields and persists the updated object.
 @mark.test
 @mark.put
 @mark.positive
@@ -49,6 +58,7 @@ def test_put_object_updates_name_and_data(created_object):
     assert response.json()["data"] == payload["data"]
 
 
+# Verifies that an empty data object clears the previous data instead of merging it.
 @mark.test
 @mark.put
 @mark.positive
@@ -69,10 +79,12 @@ def test_put_object_replaces_existing_data_with_empty_object(created_object):
     assert response.json()["data"] == payload["data"]
 
 
+# Checks that PUT returns a not-found error for a nonexistent object.
 @mark.test
 @mark.put
 @mark.negative
 def test_put_object_fails_when_object_does_not_exist():
+    # A random ID avoids accidentally targeting an existing resource.
     object_id = f"pytest-missing-{uuid4().hex}"
     payload = {
         "name": "QA Automation Updated Object",
@@ -87,6 +99,7 @@ def test_put_object_fails_when_object_does_not_exist():
     assert object_id in response.json()["error"]
 
 
+# Checks both invalid JSON and an array payload, then confirms the object is unchanged.
 @mark.test
 @mark.put
 @mark.negative
@@ -99,6 +112,7 @@ def test_put_object_rejects_invalid_request_body(created_object, request_body):
     object_url = OBJECTS_URLS.object_by_id(created_object["id"])
     response = requests.put(
         object_url,
+        # Send raw text so malformed JSON reaches the server without client serialization.
         data=request_body,
         headers={"Content-Type": "application/json"},
         timeout=10,

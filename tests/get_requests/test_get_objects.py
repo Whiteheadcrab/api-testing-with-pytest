@@ -1,9 +1,15 @@
+# GET coverage for collection retrieval, individual objects, and ID filtering.
+
 import requests
 from pytest import mark
 
+# Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
 
+# Markers select the API operation and outcome; parametrization runs each input separately.
 
+
+# Verifies that the collection returns a nonempty list with the expected object fields.
 @mark.test
 @mark.sanity
 @mark.positive
@@ -23,6 +29,7 @@ def test_get_objects_returns_success():
         assert item["name"]
 
 
+# Verifies that requesting a known ID returns the matching object.
 @mark.test
 @mark.sanity
 @mark.positive
@@ -38,6 +45,7 @@ def test_get_object_by_id_returns_requested_object():
     assert "data" in response_body
 
 
+# Verifies that collection filtering returns exactly the requested IDs.
 @mark.test
 @mark.sanity
 @mark.positive
@@ -53,6 +61,7 @@ def test_get_objects_filters_by_requested_ids():
     assert {item["id"] for item in response_body} == {"1", "2"}
 
 
+# Checks that nonexistent and negative IDs return a not-found error.
 @mark.test
 @mark.sanity
 @mark.negative
@@ -68,6 +77,7 @@ def test_get_object_returns_not_found_for_unknown_id(object_id):
     assert response.json()["error"] == f"Object with id={object_id} was not found."
 
 
+# Checks that a valid filter with no matches returns an empty collection.
 @mark.test
 @mark.positive
 def test_get_objects_returns_empty_list_for_unknown_id_filter():

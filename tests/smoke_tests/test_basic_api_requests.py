@@ -1,6 +1,9 @@
+# Basic smoke checks for the supported object API operations.
+
 import requests
 from pytest import mark
 
+# Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
 
 
