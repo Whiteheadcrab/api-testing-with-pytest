@@ -16,7 +16,7 @@ All requests, including fixture setup and cleanup, use these settings.
 Override settings in the current PowerShell session before starting pytest:
 $env:API_BASE_URL = "http://localhost:8000"
 $env:API_TIMEOUT = "5.5"
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers --run-live
 
 The example requires a running API with the same endpoints and response contract.
 api_urls.py appends /objects to API_BASE_URL. Trailing slashes are removed.
@@ -32,22 +32,45 @@ Environment variables are read when Python starts. A .env file is not loaded
 automatically. The remaining examples use the current session's settings.
 
 
-RUN ALL TESTS
--------------
-Run every test under tests with detailed test names and results:
+DEFAULT RUN: LOCAL CHECKS
+-------------------------
+Run local checks; live API tests are skipped before fixture setup:
 .\.venv\Scripts\python.exe -m pytest tests -v --strict-markers
+
+
+RUN LOCAL OR LIVE CHECKS EXPLICITLY
+-----------------------------------
+Run only local configuration and URL tests:
+.\.venv\Scripts\python.exe -m pytest tests -m unit -q
+
+Run the smaller live smoke suite (five operations plus setup requests):
+.\.venv\Scripts\python.exe -m pytest tests --run-live -m "live and smoke" -v
+
+Run only the live DELETE suite:
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests --run-live -v
+
+Run all live API cases:
+.\.venv\Scripts\python.exe -m pytest tests --run-live -m live -v
+
+Run local and live tests together:
+.\.venv\Scripts\python.exe -m pytest tests --run-live -v
+
+Selecting -m live alone still skips API tests. --run-live is required even when
+API_BASE_URL points to a local service. Local checks validate configuration and
+URL construction; they do not verify the behavior of the remote API.
+Unmarked HTTP requests in local tests fail immediately.
 
 
 RUN MULTIPLE TEST FOLDERS OR FILES
 --------------------------------
 Run both PUT and DELETE tests in one command:
-.\.venv\Scripts\python.exe -m pytest tests/put_requests tests/delete_requests -v
+.\.venv\Scripts\python.exe -m pytest tests/put_requests tests/delete_requests -v --run-live
 
 Run selected GET, PATCH, and DELETE files in one command:
-.\.venv\Scripts\python.exe -m pytest tests/get_requests/test_get_objects.py tests/patch_requests/test_patch_objects.py tests/delete_requests/test_delete_object.py -v
+.\.venv\Scripts\python.exe -m pytest tests/get_requests/test_get_objects.py tests/patch_requests/test_patch_objects.py tests/delete_requests/test_delete_object.py -v --run-live
 
 Run two specific tests in one command:
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_removes_existing_object tests/put_requests/test_put_object.py::test_put_object_updates_name_and_data -v
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_removes_existing_object tests/put_requests/test_put_object.py::test_put_object_updates_name_and_data -v --run-live
 
 Specifying a parametrized test function runs every parameter case for it.
 Listing multiple paths selects tests together; execution is sequential by default.
@@ -56,36 +79,36 @@ Listing multiple paths selects tests together; execution is sequential by defaul
 RUN ONE FILE, FUNCTION, OR PARAMETER CASE
 ---------------------------------------
 Run the DELETE test file:
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py -v
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py -v --run-live
 
 Run all three missing-object DELETE cases:
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist -v
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist -v --run-live
 
 Run only the already-deleted parameter case (quote the complete test ID):
-.\.venv\Scripts\python.exe -m pytest "tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist[already-deleted]" -v
+.\.venv\Scripts\python.exe -m pytest "tests/delete_requests/test_delete_object.py::test_delete_object_fails_when_object_does_not_exist[already-deleted]" -v --run-live
 
 
 SELECT TESTS BY MARKERS
 ----------------------
 Run tests carrying the delete marker:
-.\.venv\Scripts\python.exe -m pytest tests -m delete -v
+.\.venv\Scripts\python.exe -m pytest tests -m delete -v --run-live
 
 Run tests carrying either the put or delete marker:
-.\.venv\Scripts\python.exe -m pytest tests -m "put or delete" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "put or delete" -v --run-live
 
 Run positive DELETE tests:
-.\.venv\Scripts\python.exe -m pytest tests -m "delete and positive" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "delete and positive" -v --run-live
 
 Run negative PUT and DELETE tests:
-.\.venv\Scripts\python.exe -m pytest tests -m "(put or delete) and negative" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "(put or delete) and negative" -v --run-live
 
 Run smoke or sanity tests:
-.\.venv\Scripts\python.exe -m pytest tests -m "smoke or sanity" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "smoke or sanity" -v --run-live
 
 Run positive tests excluding smoke tests:
-.\.venv\Scripts\python.exe -m pytest tests -m "positive and not smoke" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "positive and not smoke" -v --run-live
 
-Every API test has the test marker, exactly one operation marker (get, post, put,
+Every API module has a live marker. Each API test also has the test marker, exactly one operation marker (get, post, put,
 patch, or delete), and exactly one outcome marker (positive or negative).
 The operation marker describes the operation being tested; setup, verification,
 and cleanup requests do not add extra operation markers.
@@ -93,16 +116,18 @@ Smoke tests also have smoke; selected GET checks also have sanity.
 Decorator order is test, operation, optional smoke/sanity, outcome, parametrization.
 Parameter-specific xfail marks preserve the expected POST validation failures.
 Strict marker checking is enabled in pytest.ini, so unknown markers are errors.
-A folder name does not apply a marker automatically. New tests need explicit marks.
+Local tests use test and unit plus positive or negative, without method markers.
+A folder name does not apply a marker automatically. New API modules need live
+and explicit method/outcome marks on their tests.
 
 
 SELECT TESTS BY NAME
 -------------------
 Run tests whose names or parameter IDs match either expression:
-.\.venv\Scripts\python.exe -m pytest tests -k "invalid_request_body or already-deleted" -v
+.\.venv\Scripts\python.exe -m pytest tests -k "invalid_request_body or already-deleted" -v --run-live
 
 Combine a folder selection with a name filter:
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests -k "does_not_exist" -v
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -k "does_not_exist" -v --run-live
 
 -k matches names and IDs; -m matches pytest markers.
 
@@ -120,6 +145,8 @@ Collection imports test modules but does not run test functions or fixtures.
 
 CONTROL OUTPUT AND FAILURE HANDLING
 ----------------------------------
+These examples run local checks by default. Add --run-live -m live to apply the
+same output options to API tests.
 Use compact output and short failure tracebacks:
 .\.venv\Scripts\python.exe -m pytest tests -q --tb=short
 
@@ -144,6 +171,8 @@ accepts. XFAIL means an expected failure; XPASS means such a test passed.
 
 RERUN PREVIOUS FAILURES
 ----------------------
+These commands use local checks by default. Add --run-live -m live when rerunning
+previous API failures; skipped API cases do not execute without --run-live.
 Rerun cached failures; collect nothing if there are no cached failures:
 .\.venv\Scripts\python.exe -m pytest tests --lf --last-failed-no-failures=none -v
 
@@ -168,7 +197,7 @@ Show available command-line options:
 
 PROJECT API REQUEST LIMIT
 -------------------------
-These are live API tests. A test may send several requests for setup, assertions,
+Only live API tests send requests. A live test may send several for setup, assertions,
 and cleanup. The API reported a public limit of 50 requests per 24 hours during
 the latest run and returned HTTP 405 with a daily-limit error when exhausted.
 Use --collect-only to preview selections without sending requests. If the quota

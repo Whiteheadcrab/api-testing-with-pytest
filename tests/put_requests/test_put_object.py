@@ -9,6 +9,9 @@ from pytest import fixture, mark
 from api_urls import OBJECTS_URLS
 from config import REQUEST_TIMEOUT
 
+# Every test in this module calls a running API and requires explicit opt-in.
+pytestmark = mark.live
+
 # Markers select the API operation and outcome; parametrization runs each input separately.
 
 

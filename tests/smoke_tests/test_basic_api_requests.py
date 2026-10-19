@@ -7,6 +7,9 @@ from pytest import mark
 from api_urls import OBJECTS_URLS
 from config import REQUEST_TIMEOUT
 
+# Every test in this module calls a running API and requires explicit opt-in.
+pytestmark = mark.live
+
 
 # Verifies that the objects collection is available and returns a JSON list.
 @mark.test

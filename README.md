@@ -33,9 +33,13 @@ The selected API supports standard REST operations:
 .
 |-- api_urls.py
 |-- config.py
+|-- conftest.py
 |-- pytest.ini
 |-- requirements.txt
 |-- tests/
+|   |-- unit/
+|   |   |-- test_config.py
+|   |   `-- test_api_urls.py
 |   |-- smoke_tests/
 |   |   `-- test_basic_api_requests.py
 |   |-- get_requests/
@@ -57,6 +61,33 @@ The framework will be developed incrementally with a focus on:
 - stable fixtures for setup and cleanup
 - practical test coverage for full API workflows
 
+## Local Checks and Live API Tests
+
+The default run executes local configuration and URL checks. All API tests carry
+`live` at module level and are skipped before fixture setup unless `--run-live`
+is supplied. Local checks carry `unit` and never call a service. Accidental
+`requests` calls in tests without `live` fail immediately.
+
+```powershell
+# Frequent local checks; API cases are skipped.
+.\.venv\Scripts\python.exe -m pytest tests -q
+
+# Run only local checks, without listing skipped API cases.
+.\.venv\Scripts\python.exe -m pytest tests -m unit -q
+
+# Run a smaller live smoke suite against API_BASE_URL.
+.\.venv\Scripts\python.exe -m pytest tests --run-live -m "live and smoke" -v
+
+# Run the full live API suite explicitly.
+.\.venv\Scripts\python.exe -m pytest tests --run-live -m live -v
+```
+
+Selecting `-m live` alone does not enable requests. The live suite requires a
+running service with the expected API contract and may consume the public API's
+request quota. Local tests check configuration and endpoint generation; they do
+not establish that the remote API behaves correctly. The live smoke suite covers
+five API operations and uses additional requests for resource setup.
+
 ## Environment Configuration
 
 `config.py` reads these environment variables when Python starts:
@@ -71,7 +102,7 @@ Set overrides in the PowerShell session before running pytest:
 ```powershell
 $env:API_BASE_URL = "http://localhost:8000"
 $env:API_TIMEOUT = "5.5"
-.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers --run-live
 ```
 
 The example requires a running API with the same endpoints and response contract.
@@ -92,20 +123,22 @@ See `documents/pytest_commands.txt` for more test selection and execution exampl
 
 ## Test Markers
 
-Every API test uses `test`, exactly one HTTP-method marker (`get`, `post`, `put`,
+Every API test uses module-level `live`, `test`, exactly one HTTP-method marker (`get`, `post`, `put`,
 `patch`, or `delete`), and exactly one outcome marker (`positive` or `negative`).
 The HTTP-method marker identifies the behavior under test; fixture setup,
 verification, and cleanup requests do not add extra method markers.
 
 Use this decorator order: `test`, HTTP method, optional `smoke` or `sanity`,
 outcome, then `parametrize`. Existing smoke and sanity selections are preserved.
+Local checks use module-level `test` and `unit` with `positive` or `negative`
+markers; they do not have an HTTP-method marker.
 The POST validation parameters retain their individual `xfail` marks.
 All custom markers are registered in `pytest.ini`, which enables strict marker
 checking by default to catch unregistered marker names.
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests -m "delete and negative" -v
-.\.venv\Scripts\python.exe -m pytest tests -m "(put or patch) and positive" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "delete and negative" -v --run-live
+.\.venv\Scripts\python.exe -m pytest tests -m "(put or patch) and positive" -v --run-live
 .\.venv\Scripts\python.exe -m pytest tests -m "smoke and post" --collect-only -q
 ```
 
@@ -114,7 +147,7 @@ checking by default to catch unregistered marker names.
 Run the GET tests with the project's virtual environment:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/get_requests/test_get_objects.py -v --strict-markers
+.\.venv\Scripts\python.exe -m pytest tests/get_requests/test_get_objects.py -v --strict-markers --run-live
 ```
 
 The tests cover listing objects, retrieving one object, filtering by multiple IDs,
