@@ -1,5 +1,5 @@
-# Base address of the public API used by the test suite.
-BASE_URL = "https://api.restful-api.dev"
+# Base address comes from the environment configuration shared by all tests.
+from config import BASE_URL
 
 
 # Groups collection and individual-object endpoints in one place.

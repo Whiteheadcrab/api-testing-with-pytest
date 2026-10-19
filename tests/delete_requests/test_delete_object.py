@@ -7,6 +7,7 @@ from pytest import fixture, mark
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
+from config import REQUEST_TIMEOUT
 
 # Markers select the API operation and outcome; parametrization runs each input separately.
 
@@ -18,7 +19,7 @@ def created_object():
         "name": "QA Automation Test Object",
         "data": {"created_by": "pytest", "request_type": "delete"},
     }
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     response_body = response.json()
@@ -29,7 +30,7 @@ def created_object():
         yield response_body
     finally:
         # Remove the resource after the test, including when the test fails.
-        response = requests.delete(object_url, timeout=10)
+        response = requests.delete(object_url, timeout=REQUEST_TIMEOUT)
         # Successful DELETE tests have already removed the object.
         assert response.status_code in (200, 404)
 
@@ -41,14 +42,14 @@ def created_object():
 def test_delete_object_removes_existing_object(created_object):
     object_id = created_object["id"]
     object_url = OBJECTS_URLS.object_by_id(object_id)
-    response = requests.delete(object_url, timeout=10)
+    response = requests.delete(object_url, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     assert response.json()["message"] == (
         f"Object with id = {object_id} has been deleted."
     )
 
-    response = requests.get(object_url, timeout=10)
+    response = requests.get(object_url, timeout=REQUEST_TIMEOUT)
     assert response.status_code == 404
     assert object_id in response.json()["error"]
 
@@ -60,7 +61,7 @@ def missing_object_id(request):
         # Only this scenario needs a real object and the existing cleanup fixture.
         created = request.getfixturevalue("created_object")
         object_id = created["id"]
-        response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+        response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=REQUEST_TIMEOUT)
         assert response.status_code == 200
         return object_id
     if request.param == "negative-id":
@@ -81,11 +82,11 @@ def missing_object_id(request):
 )
 def test_delete_object_fails_when_object_does_not_exist(missing_object_id):
     object_url = OBJECTS_URLS.object_by_id(missing_object_id)
-    response = requests.delete(object_url, timeout=10)
+    response = requests.delete(object_url, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 404
     assert missing_object_id in response.json()["error"]
 
-    response = requests.get(object_url, timeout=10)
+    response = requests.get(object_url, timeout=REQUEST_TIMEOUT)
     assert response.status_code == 404
     assert missing_object_id in response.json()["error"]

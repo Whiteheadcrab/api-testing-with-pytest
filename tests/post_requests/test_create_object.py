@@ -5,6 +5,7 @@ from pytest import mark, param
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
+from config import REQUEST_TIMEOUT
 
 # Markers select the API operation and outcome; parametrization runs each input separately.
 
@@ -21,7 +22,7 @@ def test_post_object_creates_new_object():
         },
     }
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -49,7 +50,7 @@ def test_post_object_creates_new_object():
     ],
 )
 def test_post_object_creation_rejects_invalid_fields(payload):
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 400
 
@@ -60,7 +61,7 @@ def test_post_object_creation_rejects_invalid_fields(payload):
 def test_post_object_creation_fails_when_payload_schema_is_incorrect():
     payload = ["not", "a", "valid", "object", "payload"]
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
     response_body = response.json()
 
     assert response.status_code == 400

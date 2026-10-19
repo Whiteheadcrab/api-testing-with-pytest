@@ -5,6 +5,7 @@ from pytest import mark
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
+from config import REQUEST_TIMEOUT
 
 # Markers select the API operation and outcome; parametrization runs each input separately.
 
@@ -14,7 +15,7 @@ from api_urls import OBJECTS_URLS
 @mark.sanity
 @mark.positive
 def test_get_objects_returns_success():
-    response = requests.get(OBJECTS_URLS.BASE, timeout=10)
+    response = requests.get(OBJECTS_URLS.BASE, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     response_body = response.json()
@@ -35,7 +36,7 @@ def test_get_objects_returns_success():
 @mark.positive
 @mark.parametrize("object_id", ["1", "2"], ids=["first-object", "second-object"])
 def test_get_object_by_id_returns_requested_object(object_id):
-    response = requests.get(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+    response = requests.get(OBJECTS_URLS.object_by_id(object_id), timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     response_body = response.json()
@@ -57,7 +58,7 @@ def test_get_object_by_id_returns_requested_object(object_id):
 )
 def test_get_objects_filters_by_requested_ids(object_ids):
     response = requests.get(
-        OBJECTS_URLS.BASE, params={"id": object_ids}, timeout=10
+        OBJECTS_URLS.BASE, params={"id": object_ids}, timeout=REQUEST_TIMEOUT
     )
 
     assert response.status_code == 200
@@ -77,7 +78,7 @@ def test_get_objects_filters_by_requested_ids(object_ids):
     ids=["nonexistent-id", "negative-id"],
 )
 def test_get_object_returns_not_found_for_unknown_id(object_id):
-    response = requests.get(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+    response = requests.get(OBJECTS_URLS.object_by_id(object_id), timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 404
     assert response.json()["error"] == f"Object with id={object_id} was not found."
@@ -90,7 +91,7 @@ def test_get_objects_returns_empty_list_for_unknown_id_filter():
     response = requests.get(
         OBJECTS_URLS.BASE,
         params={"id": "pytest-missing-object-98a7f6d4"},
-        timeout=10,
+        timeout=REQUEST_TIMEOUT,
     )
 
     # Collection filtering succeeds even when no objects match the requested ID.

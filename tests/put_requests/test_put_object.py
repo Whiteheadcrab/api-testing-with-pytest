@@ -7,6 +7,7 @@ from pytest import fixture, mark
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
+from config import REQUEST_TIMEOUT
 
 # Markers select the API operation and outcome; parametrization runs each input separately.
 
@@ -18,7 +19,7 @@ def created_object():
         "name": "QA Automation Test Object",
         "data": {"created_by": "pytest", "request_type": "put"},
     }
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     response_body = response.json()
@@ -29,7 +30,7 @@ def created_object():
         yield response_body
     finally:
         # Remove the resource after the test, including when the test fails.
-        response = requests.delete(object_url, timeout=10)
+        response = requests.delete(object_url, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 200
 
 
@@ -50,7 +51,7 @@ def created_object():
 )
 def test_put_object_updates_name_and_data(created_object, payload):
     object_url = OBJECTS_URLS.object_by_id(created_object["id"])
-    response = requests.put(object_url, json=payload, timeout=10)
+    response = requests.put(object_url, json=payload, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     response_body = response.json()
@@ -60,7 +61,7 @@ def test_put_object_updates_name_and_data(created_object, payload):
     assert response_body["updatedAt"]
 
     # Retrieve the object independently to confirm the replacement was persisted.
-    response = requests.get(object_url, timeout=10)
+    response = requests.get(object_url, timeout=REQUEST_TIMEOUT)
     assert response.status_code == 200
     assert response.json()["name"] == payload["name"]
     assert response.json()["data"] == payload["data"]
@@ -79,7 +80,7 @@ def test_put_object_fails_when_object_does_not_exist():
     }
 
     response = requests.put(
-        OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=10
+        OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=REQUEST_TIMEOUT
     )
 
     assert response.status_code == 404
@@ -102,13 +103,13 @@ def test_put_object_rejects_invalid_request_body(created_object, request_body):
         # Send raw text so malformed JSON reaches the server without client serialization.
         data=request_body,
         headers={"Content-Type": "application/json"},
-        timeout=10,
+        timeout=REQUEST_TIMEOUT,
     )
 
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid request body"
 
-    response = requests.get(object_url, timeout=10)
+    response = requests.get(object_url, timeout=REQUEST_TIMEOUT)
     assert response.status_code == 200
     response_body = response.json()
     assert response_body["name"] == created_object["name"]

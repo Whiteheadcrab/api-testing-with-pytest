@@ -8,6 +8,30 @@ The examples use the project's virtual environment directly, so activation is
 not required. Each command below is a separate example.
 
 
+CONFIGURE THE ENVIRONMENT
+-------------------------
+Defaults: API_BASE_URL=https://api.restful-api.dev and API_TIMEOUT=10 seconds.
+All requests, including fixture setup and cleanup, use these settings.
+
+Override settings in the current PowerShell session before starting pytest:
+$env:API_BASE_URL = "http://localhost:8000"
+$env:API_TIMEOUT = "5.5"
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers
+
+The example requires a running API with the same endpoints and response contract.
+api_urls.py appends /objects to API_BASE_URL. Trailing slashes are removed.
+Use an absolute HTTP/HTTPS URL without a query string or fragment and a positive,
+finite timeout in seconds. Invalid settings raise an error during startup.
+The timeout applies to connection and read waits, not the total test duration.
+
+Return to the defaults by removing the overrides:
+Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
+Remove-Item Env:API_TIMEOUT -ErrorAction SilentlyContinue
+
+Environment variables are read when Python starts. A .env file is not loaded
+automatically. The remaining examples use the current session's settings.
+
+
 RUN ALL TESTS
 -------------
 Run every test under tests with detailed test names and results:

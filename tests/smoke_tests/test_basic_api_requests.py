@@ -5,6 +5,7 @@ from pytest import mark
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
+from config import REQUEST_TIMEOUT
 
 
 # Verifies that the objects collection is available and returns a JSON list.
@@ -13,7 +14,7 @@ from api_urls import OBJECTS_URLS
 @mark.positive
 @mark.get
 def test_get_objects_returns_success():
-    response = requests.get(OBJECTS_URLS.BASE, timeout=10)
+    response = requests.get(OBJECTS_URLS.BASE, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -33,7 +34,7 @@ def test_post_object_creates_new_object():
         },
     }
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -57,7 +58,7 @@ def test_put_object_updates_existing_object():
         },
     }
 
-    response = requests.put(OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=10)
+    response = requests.put(OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=REQUEST_TIMEOUT)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -75,7 +76,7 @@ def test_patch_object_updates_existing_object_partially():
         "name": "QA Automation Patched Object",
     }
 
-    response = requests.patch(OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=10)
+    response = requests.patch(OBJECTS_URLS.object_by_id(object_id), json=payload, timeout=REQUEST_TIMEOUT)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -89,7 +90,7 @@ def test_patch_object_updates_existing_object_partially():
 def test_delete_object_removes_existing_object():
     object_id = _create_test_object()
 
-    response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=10)
+    response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     assert object_id in response.json()["message"]
@@ -105,7 +106,7 @@ def _create_test_object() -> str:
         },
     }
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=10)
+    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     return response.json()["id"]

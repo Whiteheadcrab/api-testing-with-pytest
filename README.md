@@ -32,6 +32,7 @@ The selected API supports standard REST operations:
 ```text
 .
 |-- api_urls.py
+|-- config.py
 |-- pytest.ini
 |-- requirements.txt
 |-- tests/
@@ -55,6 +56,39 @@ The framework will be developed incrementally with a focus on:
 - reusable request helpers instead of duplicated request code
 - stable fixtures for setup and cleanup
 - practical test coverage for full API workflows
+
+## Environment Configuration
+
+`config.py` reads these environment variables when Python starts:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `API_BASE_URL` | `https://api.restful-api.dev` | API base address; `/objects` is appended by `api_urls.py` |
+| `API_TIMEOUT` | `10` | Timeout in seconds for every request, including fixture setup and cleanup |
+
+Set overrides in the PowerShell session before running pytest:
+
+```powershell
+$env:API_BASE_URL = "http://localhost:8000"
+$env:API_TIMEOUT = "5.5"
+.\.venv\Scripts\python.exe -m pytest tests/delete_requests -v --strict-markers
+```
+
+The example requires a running API with the same endpoints and response contract.
+Trailing slashes on the base URL are removed. The URL must use HTTP or HTTPS and
+have no query string or fragment. The timeout must be positive and finite;
+invalid settings raise an error at startup. Requests uses this timeout for
+connection and read waits, rather than as a total test duration limit.
+
+Remove the overrides to return to the defaults:
+
+```powershell
+Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
+Remove-Item Env:API_TIMEOUT -ErrorAction SilentlyContinue
+```
+
+Settings come from the process environment; `.env` files are not loaded automatically.
+See `documents/pytest_commands.txt` for more test selection and execution examples.
 
 ## GET Test Coverage
 
