@@ -85,9 +85,15 @@ Run smoke or sanity tests:
 Run positive tests excluding smoke tests:
 .\.venv\Scripts\python.exe -m pytest tests -m "positive and not smoke" -v
 
-Markers must be applied to a test to select it. A folder name does not apply a
-marker automatically. Use file/folder paths to select every test for an operation,
-including tests that currently lack an operation marker.
+Every API test has the test marker, exactly one operation marker (get, post, put,
+patch, or delete), and exactly one outcome marker (positive or negative).
+The operation marker describes the operation being tested; setup, verification,
+and cleanup requests do not add extra operation markers.
+Smoke tests also have smoke; selected GET checks also have sanity.
+Decorator order is test, operation, optional smoke/sanity, outcome, parametrization.
+Parameter-specific xfail marks preserve the expected POST validation failures.
+Strict marker checking is enabled in pytest.ini, so unknown markers are errors.
+A folder name does not apply a marker automatically. New tests need explicit marks.
 
 
 SELECT TESTS BY NAME

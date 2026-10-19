@@ -12,6 +12,7 @@ from config import REQUEST_TIMEOUT
 
 # Verifies that the collection returns a nonempty list with the expected object fields.
 @mark.test
+@mark.get
 @mark.sanity
 @mark.positive
 def test_get_objects_returns_success():
@@ -32,6 +33,7 @@ def test_get_objects_returns_success():
 
 # Verifies that requesting a known ID returns the matching object.
 @mark.test
+@mark.get
 @mark.sanity
 @mark.positive
 @mark.parametrize("object_id", ["1", "2"], ids=["first-object", "second-object"])
@@ -49,6 +51,7 @@ def test_get_object_by_id_returns_requested_object(object_id):
 
 # Verifies that collection filtering returns exactly the requested IDs.
 @mark.test
+@mark.get
 @mark.sanity
 @mark.positive
 @mark.parametrize(
@@ -70,6 +73,7 @@ def test_get_objects_filters_by_requested_ids(object_ids):
 
 # Checks that nonexistent and negative IDs return a not-found error.
 @mark.test
+@mark.get
 @mark.sanity
 @mark.negative
 @mark.parametrize(
@@ -86,6 +90,7 @@ def test_get_object_returns_not_found_for_unknown_id(object_id):
 
 # Checks that a valid filter with no matches returns an empty collection.
 @mark.test
+@mark.get
 @mark.positive
 def test_get_objects_returns_empty_list_for_unknown_id_filter():
     response = requests.get(

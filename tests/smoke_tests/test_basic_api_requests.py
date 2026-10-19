@@ -10,9 +10,9 @@ from config import REQUEST_TIMEOUT
 
 # Verifies that the objects collection is available and returns a JSON list.
 @mark.test
+@mark.get
 @mark.smoke
 @mark.positive
-@mark.get
 def test_get_objects_returns_success():
     response = requests.get(OBJECTS_URLS.BASE, timeout=REQUEST_TIMEOUT)
 
@@ -22,9 +22,9 @@ def test_get_objects_returns_success():
 
 # Verifies that a new object can be created with a valid request payload.
 @mark.test
+@mark.post
 @mark.smoke
 @mark.positive
-@mark.post
 def test_post_object_creates_new_object():
     payload = {
         "name": "QA Automation Test Object",
@@ -45,6 +45,7 @@ def test_post_object_creates_new_object():
 
 # Verifies that an existing object can be fully replaced with PUT.
 @mark.test
+@mark.put
 @mark.smoke
 @mark.positive
 def test_put_object_updates_existing_object():
@@ -68,6 +69,7 @@ def test_put_object_updates_existing_object():
 
 # Verifies that an existing object can be partially updated with PATCH.
 @mark.test
+@mark.patch
 @mark.smoke
 @mark.positive
 def test_patch_object_updates_existing_object_partially():
@@ -85,6 +87,7 @@ def test_patch_object_updates_existing_object_partially():
 
 # Verifies that an existing object can be deleted successfully.
 @mark.test
+@mark.delete
 @mark.smoke
 @mark.positive
 def test_delete_object_removes_existing_object():

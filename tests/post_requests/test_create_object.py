@@ -12,6 +12,7 @@ from config import REQUEST_TIMEOUT
 
 # Verifies that creation returns the submitted fields and a generated ID.
 @mark.test
+@mark.post
 @mark.positive
 def test_post_object_creates_new_object():
     payload = {
@@ -33,6 +34,7 @@ def test_post_object_creates_new_object():
 
 # Each parameter retains its own expected-failure reason for unsupported validation.
 @mark.test
+@mark.post
 @mark.negative
 @mark.parametrize(
     "payload",
@@ -57,6 +59,7 @@ def test_post_object_creation_rejects_invalid_fields(payload):
 
 # Checks that an array payload is rejected because the endpoint expects a JSON object.
 @mark.test
+@mark.post
 @mark.negative
 def test_post_object_creation_fails_when_payload_schema_is_incorrect():
     payload = ["not", "a", "valid", "object", "payload"]

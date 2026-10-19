@@ -90,6 +90,25 @@ Remove-Item Env:API_TIMEOUT -ErrorAction SilentlyContinue
 Settings come from the process environment; `.env` files are not loaded automatically.
 See `documents/pytest_commands.txt` for more test selection and execution examples.
 
+## Test Markers
+
+Every API test uses `test`, exactly one HTTP-method marker (`get`, `post`, `put`,
+`patch`, or `delete`), and exactly one outcome marker (`positive` or `negative`).
+The HTTP-method marker identifies the behavior under test; fixture setup,
+verification, and cleanup requests do not add extra method markers.
+
+Use this decorator order: `test`, HTTP method, optional `smoke` or `sanity`,
+outcome, then `parametrize`. Existing smoke and sanity selections are preserved.
+The POST validation parameters retain their individual `xfail` marks.
+All custom markers are registered in `pytest.ini`, which enables strict marker
+checking by default to catch unregistered marker names.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests -m "delete and negative" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "(put or patch) and positive" -v
+.\.venv\Scripts\python.exe -m pytest tests -m "smoke and post" --collect-only -q
+```
+
 ## GET Test Coverage
 
 Run the GET tests with the project's virtual environment:
