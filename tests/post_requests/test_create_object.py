@@ -1,11 +1,8 @@
 # POST coverage for successful creation and invalid request payloads.
 
-import requests
 from pytest import mark, param
 
-# Shared endpoint definitions keep URLs consistent across the test suite.
-from api_urls import OBJECTS_URLS
-from config import REQUEST_TIMEOUT
+# The shared post_object fixture registers cleanup for every successful creation.
 
 # Every test in this module calls a running API and requires explicit opt-in.
 pytestmark = mark.live
@@ -17,7 +14,7 @@ pytestmark = mark.live
 @mark.test
 @mark.post
 @mark.positive
-def test_post_object_creates_new_object():
+def test_post_object_creates_new_object(post_object):
     payload = {
         "name": "QA Automation Test Object",
         "data": {
@@ -26,7 +23,7 @@ def test_post_object_creates_new_object():
         },
     }
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
+    response = post_object(payload)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -54,8 +51,8 @@ def test_post_object_creates_new_object():
         ),
     ],
 )
-def test_post_object_creation_rejects_invalid_fields(payload):
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
+def test_post_object_creation_rejects_invalid_fields(payload, post_object):
+    response = post_object(payload)
 
     assert response.status_code == 400
 
@@ -64,10 +61,10 @@ def test_post_object_creation_rejects_invalid_fields(payload):
 @mark.test
 @mark.post
 @mark.negative
-def test_post_object_creation_fails_when_payload_schema_is_incorrect():
+def test_post_object_creation_fails_when_payload_schema_is_incorrect(post_object):
     payload = ["not", "a", "valid", "object", "payload"]
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
+    response = post_object(payload)
     response_body = response.json()
 
     assert response.status_code == 400

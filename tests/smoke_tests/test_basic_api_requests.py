@@ -28,7 +28,7 @@ def test_get_objects_returns_success():
 @mark.post
 @mark.smoke
 @mark.positive
-def test_post_object_creates_new_object():
+def test_post_object_creates_new_object(post_object):
     payload = {
         "name": "QA Automation Test Object",
         "data": {
@@ -37,7 +37,7 @@ def test_post_object_creates_new_object():
         },
     }
 
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
+    response = post_object(payload)
     response_body = response.json()
 
     assert response.status_code == 200
@@ -51,8 +51,8 @@ def test_post_object_creates_new_object():
 @mark.put
 @mark.smoke
 @mark.positive
-def test_put_object_updates_existing_object():
-    object_id = _create_test_object()
+def test_put_object_updates_existing_object(created_object):
+    object_id = created_object["id"]
     payload = {
         "name": "QA Automation Updated Object",
         "data": {
@@ -75,8 +75,8 @@ def test_put_object_updates_existing_object():
 @mark.patch
 @mark.smoke
 @mark.positive
-def test_patch_object_updates_existing_object_partially():
-    object_id = _create_test_object()
+def test_patch_object_updates_existing_object_partially(created_object):
+    object_id = created_object["id"]
     payload = {
         "name": "QA Automation Patched Object",
     }
@@ -93,26 +93,10 @@ def test_patch_object_updates_existing_object_partially():
 @mark.delete
 @mark.smoke
 @mark.positive
-def test_delete_object_removes_existing_object():
-    object_id = _create_test_object()
+def test_delete_object_removes_existing_object(created_object):
+    object_id = created_object["id"]
 
     response = requests.delete(OBJECTS_URLS.object_by_id(object_id), timeout=REQUEST_TIMEOUT)
 
     assert response.status_code == 200
     assert object_id in response.json()["message"]
-
-
-# Creates a temporary object for tests that require an existing resource.
-def _create_test_object() -> str:
-    payload = {
-        "name": "QA Automation Temporary Object",
-        "data": {
-            "created_by": "pytest",
-            "test_type": "smoke",
-        },
-    }
-
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
-
-    assert response.status_code == 200
-    return response.json()["id"]

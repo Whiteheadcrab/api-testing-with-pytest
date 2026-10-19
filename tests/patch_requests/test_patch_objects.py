@@ -3,7 +3,7 @@
 from uuid import uuid4
 
 import requests
-from pytest import fixture, mark
+from pytest import mark
 
 # Shared endpoint definitions keep URLs consistent across the test suite.
 from api_urls import OBJECTS_URLS
@@ -13,28 +13,6 @@ from config import REQUEST_TIMEOUT
 pytestmark = mark.live
 
 # Markers select the API operation and outcome; parametrization runs each input separately.
-
-
-# Creates a separate object for each test and cleans it up even if an assertion fails.
-@fixture
-def created_object():
-    payload = {
-        "name": "QA Automation Test Object",
-        "data": {"created_by": "pytest", "request_type": "patch"},
-    }
-    response = requests.post(OBJECTS_URLS.BASE, json=payload, timeout=REQUEST_TIMEOUT)
-
-    assert response.status_code == 200
-    response_body = response.json()
-    object_url = OBJECTS_URLS.object_by_id(response_body["id"])
-
-    try:
-        # Give the test the created resource; execution resumes here during teardown.
-        yield response_body
-    finally:
-        # Remove the resource after the test, including when the test fails.
-        response = requests.delete(object_url, timeout=REQUEST_TIMEOUT)
-        assert response.status_code == 200
 
 
 # Verifies each update persists while fields omitted from the payload remain unchanged.

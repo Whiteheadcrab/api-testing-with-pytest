@@ -142,6 +142,27 @@ checking by default to catch unregistered marker names.
 .\.venv\Scripts\python.exe -m pytest tests -m "smoke and post" --collect-only -q
 ```
 
+## Shared Fixtures and Cleanup
+
+Root `conftest.py` provides two function-scoped fixtures for all API test modules:
+
+- `post_object(payload)` sends POST and returns the response so each test keeps
+  its own status and body assertions. Every successful response containing an ID
+  registers a cleanup finalizer before the response is returned.
+- `created_object` uses `post_object` to provide a fresh object for PUT, PATCH,
+  DELETE, and smoke tests that require an existing resource.
+
+Cleanup runs after successful tests, assertion failures, setup failures after
+creation, and expected failures. This includes negative POST cases that the API
+unexpectedly accepts. Each created object has its own finalizer, so one cleanup
+failure does not prevent attempts to remove the others. DELETE teardown accepts
+200 or 404 because the test may already have removed the object; other responses
+or request errors are reported as teardown errors.
+
+Cleanup requires the API to return the new object's ID and remain reachable.
+Abruptly terminating the Python process can prevent finalizers from running.
+Live tests consume requests for cleanup as well as setup and assertions.
+
 ## GET Test Coverage
 
 Run the GET tests with the project's virtual environment:
@@ -168,11 +189,10 @@ delayed server and application code that handles timeouts; this project currentl
 calls `requests` directly. No artificial timeout or simulated access-error tests
 are included.
 
-## Planned Next Steps
+## Completed Scope
 
-- add project dependencies
-- create request helper/client layer
-- add pytest configuration
-- implement CRUD tests for the `objects` resource
-- introduce fixtures for created test objects
-- add basic reporting and test execution documentation
+- CRUD tests with parametrized cases and consistent markers
+- Environment configuration for the API address and request timeout
+- Shared resource fixtures and cleanup across POST, PUT, PATCH, DELETE, and smoke tests
+- Local configuration and URL checks, with explicit opt-in for live API runs
+- Pytest command documentation and JUnit XML reporting examples
